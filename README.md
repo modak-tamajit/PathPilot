@@ -256,3 +256,13 @@ All within a polished SwiftUI experience.
 
 ### 🧭 Built for the Swift Student Challenge  
 **Fully Offline · Psychology-Based · Intelligent · Student-Centric**
+
+## 📸 App Screenshots
+
+![Welcome Screen](Assets/Home.png)
+
+![Onboard Selection](Assets/Onboard.png)
+
+![Quiz Screen](Assets/Ques.png)
+
+![Results Screen](Assets/results.png)
