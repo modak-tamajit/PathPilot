@@ -263,6 +263,8 @@ All within a polished SwiftUI experience.
 
 ![Onboard Selection](Assets/Onboard.png)
 
+![Subject Screen](Assets/Subject.png)
+
 ![Quiz Screen](Assets/Ques.png)
 
-![Results Screen](Assets/results.png)
+![Results Screen](Assets/Result.png)
