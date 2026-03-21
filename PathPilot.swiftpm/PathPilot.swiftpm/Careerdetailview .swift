@@ -14,15 +14,7 @@ struct CareerDetailView: View {
         VStack(spacing: 0) {
             // Navigation Bar
             HStack {
-                Button(action: onBack) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Results")
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
-                    }
-                    .foregroundColor(.cyan)
-                }
+                NavBackButton(label: "Results", action: onBack)
                 Spacer()
                 Button(action: {
                     if session.bookmarkedCareers.contains(career.title) {
@@ -63,18 +55,32 @@ struct CareerDetailView: View {
                             .opacity(appeared ? 1 : 0)
                             .animation(.easeOut.delay(0.3), value: appeared)
 
-                        // Timeline pill
-                        HStack(spacing: 6) {
-                            Image(systemName: "clock.fill")
-                                .foregroundColor(.cyan)
-                            Text(career.timeline)
-                                .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                .foregroundColor(.cyan)
+                        // Fix: salary now shown prominently in hero alongside timeline
+                        HStack(spacing: 10) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "clock.fill")
+                                    .foregroundColor(.cyan)
+                                Text(career.timeline)
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.cyan)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(Color.cyan.opacity(0.1))
+                            .cornerRadius(20)
+
+                            HStack(spacing: 6) {
+                                Image(systemName: "indianrupeesign.circle.fill")
+                                    .foregroundColor(.green)
+                                Text(career.salaryRange)
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.green)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(Color.green.opacity(0.1))
+                            .cornerRadius(20)
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Color.cyan.opacity(0.1))
-                        .cornerRadius(20)
                         .opacity(appeared ? 1 : 0)
                         .animation(.easeOut.delay(0.35), value: appeared)
                     }
@@ -89,7 +95,11 @@ struct CareerDetailView: View {
                                     .foregroundColor(selectedTab == idx ? .black : Theme.textSecondary)
                                     .frame(maxWidth: .infinity)
                                     .padding(.vertical, 10)
-                                    .background(selectedTab == idx ? Theme.gradientAccent : LinearGradient(colors: [Color.clear], startPoint: .leading, endPoint: .trailing))
+                                    .background(
+                                        selectedTab == idx
+                                            ? Theme.gradientAccent
+                                            : LinearGradient(colors: [Color.clear], startPoint: .leading, endPoint: .trailing)
+                                    )
                                     .cornerRadius(10)
                             }
                         }
@@ -129,11 +139,9 @@ struct RoadmapTabView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Steps
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(career.roadmap) { step in
                     HStack(alignment: .top, spacing: 14) {
-                        // Timeline dot
                         VStack(spacing: 0) {
                             ZStack {
                                 Circle()
@@ -175,7 +183,6 @@ struct RoadmapTabView: View {
             .padding(18)
             .glassCard()
 
-            // Learning Platforms
             VStack(alignment: .leading, spacing: 12) {
                 Text("📺 Where to Learn")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -205,7 +212,6 @@ struct CollegeTabView: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            // College Types
             VStack(alignment: .leading, spacing: 12) {
                 Text("🎓 Recommended Colleges")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -226,7 +232,6 @@ struct CollegeTabView: View {
             .padding(18)
             .glassCard()
 
-            // Entrance Exams
             VStack(alignment: .leading, spacing: 12) {
                 Text("📝 Entrance Exams")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -247,7 +252,6 @@ struct CollegeTabView: View {
             .padding(18)
             .glassCard()
 
-            // Scholarship
             VStack(alignment: .leading, spacing: 10) {
                 Text("🏅 Scholarship Tips")
                     .font(.system(size: 15, weight: .bold, design: .rounded))

@@ -3,6 +3,7 @@ import SwiftUI
 // MARK: - Subject Selection Screen
 struct SubjectSelectionView: View {
     @ObservedObject var session: AppSession
+    let onBack: () -> Void
     let onContinue: () -> Void
     @State private var appeared = false
 
@@ -11,30 +12,43 @@ struct SubjectSelectionView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            VStack(spacing: 8) {
+            // Header with back navigation
+            HStack {
+                NavBackButton(label: "Back", action: onBack)
+                Spacer()
+                // Selected count badge
+                if !session.selectedSubjects.isEmpty {
+                    Text("\(session.selectedSubjects.count) selected")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .foregroundColor(.cyan)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.cyan.opacity(0.12))
+                        .cornerRadius(20)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 56)
+            .padding(.bottom, 12)
+
+            VStack(spacing: 6) {
                 Text("What subjects do\nyou love? 📚")
-                    .font(.system(size: 28, weight: .heavy, design: .rounded))
+                    .font(.system(size: 26, weight: .heavy, design: .rounded))
                     .foregroundStyle(Theme.gradientHero)
                     .multilineTextAlignment(.center)
-                    .padding(.top, 60)
 
                 Text("Pick at least 2 that excite you")
-                    .font(.system(size: 15, design: .rounded))
+                    .font(.system(size: 14, design: .rounded))
                     .foregroundColor(Theme.textSecondary)
             }
             .opacity(appeared ? 1 : 0)
             .animation(.easeOut.delay(0.1), value: appeared)
+            .padding(.bottom, 12)
 
-            Spacer().frame(height: 20)
-
-            // Scrollable subject grid grouped by stream
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
+                VStack(spacing: 20) {
                     ForEach(Subject.byStream, id: \.stream) { group in
                         VStack(alignment: .leading, spacing: 12) {
-
-                            // Stream header
                             HStack(spacing: 8) {
                                 Text(group.stream.emoji)
                                     .font(.system(size: 15))
@@ -42,18 +56,23 @@ struct SubjectSelectionView: View {
                                     .font(.system(size: 15, weight: .bold, design: .rounded))
                                     .foregroundColor(group.stream.color)
                                 Spacer()
-                                Text("\(group.subjects.filter { session.selectedSubjects.contains($0) }.count) selected")
-                                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                                    .foregroundColor(group.stream.color.opacity(0.7))
+                                let count = group.subjects.filter { session.selectedSubjects.contains($0) }.count
+                                if count > 0 {
+                                    Text("\(count) selected")
+                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                        .foregroundColor(group.stream.color.opacity(0.8))
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(group.stream.color.opacity(0.1))
+                                        .cornerRadius(8)
+                                }
                             }
                             .padding(.horizontal, 4)
 
-                            // Divider
                             Rectangle()
                                 .fill(group.stream.color.opacity(0.25))
                                 .frame(height: 1)
 
-                            // Subject grid
                             LazyVGrid(columns: columns, spacing: 12) {
                                 ForEach(Array(group.subjects.enumerated()), id: \.element.id) { idx, subject in
                                     SubjectCard(
@@ -82,7 +101,7 @@ struct SubjectSelectionView: View {
                         )
                     }
 
-                    Spacer().frame(height: 100)
+                    Spacer().frame(height: 110)
                 }
                 .padding(.horizontal, 20)
             }
@@ -90,14 +109,17 @@ struct SubjectSelectionView: View {
             .animation(.easeOut.delay(0.2), value: appeared)
         }
         .overlay(alignment: .bottom) {
-            // Sticky bottom bar
             VStack(spacing: 10) {
                 if !session.selectedSubjects.isEmpty {
-                    Text("\(session.selectedSubjects.count) subject\(session.selectedSubjects.count == 1 ? "" : "s") selected \(canContinue ? "✓" : "(need \(2 - session.selectedSubjects.count) more)")")
-                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                        .foregroundColor(canContinue ? .cyan : Theme.textSecondary)
-                        .transition(.opacity)
-                        .animation(.easeOut, value: session.selectedSubjects.count)
+                    Text(
+                        canContinue
+                            ? "\(session.selectedSubjects.count) subjects selected ✓"
+                            : "\(session.selectedSubjects.count) selected · need \(2 - session.selectedSubjects.count) more"
+                    )
+                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .foregroundColor(canContinue ? .cyan : Theme.textSecondary)
+                    .transition(.opacity)
+                    .animation(.easeOut, value: session.selectedSubjects.count)
                 }
 
                 Button(action: { if canContinue { onContinue() } }) {
@@ -188,7 +210,7 @@ struct QuizView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Top bar
+            // Top bar — fix: removed invisible duplicate spacer button
             VStack(spacing: 10) {
                 HStack {
                     Button(action: goBack) {
@@ -198,23 +220,23 @@ struct QuizView: View {
                             Text("Back")
                                 .font(.system(size: 14, weight: .medium, design: .rounded))
                         }
-                        .foregroundColor(currentIndex > 0 ? .cyan : .clear)
+                        .foregroundColor(.cyan)
+                        .opacity(currentIndex > 0 ? 1 : 0)
                     }
                     .disabled(currentIndex == 0)
 
                     Spacer()
 
-                    Text("\(currentIndex + 1) of \(quizQuestions.count)")
+                    Text("\(currentIndex + 1) / \(quizQuestions.count)")
                         .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundColor(Theme.textPrimary)
 
                     Spacer()
 
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left").font(.system(size: 14))
-                        Text("Back").font(.system(size: 14))
-                    }
-                    .foregroundColor(.clear)
+                    // Invisible placeholder to keep title centred without a duplicate button
+                    Text("Back")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(.clear)
                 }
 
                 AnimatedProgressBar(progress: progress)
@@ -328,7 +350,7 @@ struct QuizOptionButton: View {
                     Circle()
                         .fill(isSelected ? Color.cyan : Color.white.opacity(0.1))
                         .frame(width: 30, height: 30)
-                    Text(["A","B","C","D"][index])
+                    Text(["A", "B", "C", "D"][index])
                         .font(.system(size: 13, weight: .bold, design: .rounded))
                         .foregroundColor(isSelected ? .black : Theme.textSecondary)
                 }

@@ -33,7 +33,6 @@ struct WelcomeView: View {
 
             Spacer().frame(height: 28)
 
-            // Title
             VStack(spacing: 8) {
                 Text("PathPilot")
                     .font(.system(size: 46, weight: .heavy, design: .rounded))
@@ -51,7 +50,6 @@ struct WelcomeView: View {
 
             Spacer().frame(height: 40)
 
-            // Feature Pills
             VStack(spacing: 10) {
                 FeaturePill(icon: "🧠", text: "Psychology-based career matching")
                 FeaturePill(icon: "🗺️", text: "Personalized learning roadmap")
@@ -65,7 +63,6 @@ struct WelcomeView: View {
 
             Spacer()
 
-            // CTA Button
             Button(action: onStart) {
                 HStack(spacing: 10) {
                     Text("Begin Your Journey")
@@ -112,6 +109,7 @@ struct FeaturePill: View {
 // MARK: - Name Input Screen
 struct NameInputView: View {
     @ObservedObject var session: AppSession
+    let onBack: () -> Void
     let onContinue: () -> Void
     @State private var appeared = false
     @FocusState private var isFocused: Bool
@@ -122,10 +120,17 @@ struct NameInputView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // Fix: added back button — was missing, user was trapped on this screen
+            HStack {
+                NavBackButton(label: "Back", action: onBack)
+                Spacer()
+            }
+            .padding(.horizontal, 28)
+            .padding(.top, 56)
+
             Spacer()
 
             VStack(spacing: 32) {
-                // Header
                 VStack(spacing: 10) {
                     Text("👋")
                         .font(.system(size: 60))
@@ -146,7 +151,6 @@ struct NameInputView: View {
                         .animation(.easeOut.delay(0.35), value: appeared)
                 }
 
-                // Input card
                 VStack(alignment: .leading, spacing: 14) {
                     Text("What should I call you?")
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
@@ -164,6 +168,8 @@ struct NameInputView: View {
                         )
                         .tint(.cyan)
                         .focused($isFocused)
+                        .submitLabel(.done)
+                        .onSubmit { if isValid { onContinue() } }
 
                     if !session.userName.isEmpty {
                         Text("Nice to meet you, \(session.userName)! 🌟")
@@ -183,9 +189,11 @@ struct NameInputView: View {
 
             Spacer()
 
-            // Continue Button
             Button(action: {
-                if isValid { onContinue() }
+                if isValid {
+                    isFocused = false
+                    onContinue()
+                }
             }) {
                 HStack(spacing: 10) {
                     Text("Continue")
@@ -201,6 +209,8 @@ struct NameInputView: View {
 
             Spacer().frame(height: 50)
         }
+        // Fix: tap anywhere outside the field to dismiss keyboard
+        .onTapGesture { isFocused = false }
         .onAppear {
             appeared = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {

@@ -1,7 +1,10 @@
+// PathPilotApp.swift
+// Extracta — App entry point
+
 import SwiftUI
 
 @main
-struct MyApp: App {
+struct PathPilotApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

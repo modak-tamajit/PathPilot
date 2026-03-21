@@ -70,7 +70,6 @@ enum SubjectStream: String, CaseIterable {
 enum Subject: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
-    // Science Stream
     case physics = "Physics"
     case chemistry = "Chemistry"
     case biology = "Biology"
@@ -79,14 +78,12 @@ enum Subject: String, CaseIterable, Identifiable {
     case zoology = "Zoology"
     case psychology = "Psychology"
 
-    // Commerce Stream
     case accountancy = "Accountancy"
     case businessStudies = "Business Studies"
     case economics = "Economics"
     case statistics = "Statistics"
     case entrepreneurship = "Entrepreneurship"
 
-    // Arts & Humanities Stream
     case history = "History"
     case geography = "Geography"
     case politicalScience = "Political Science"
@@ -97,7 +94,6 @@ enum Subject: String, CaseIterable, Identifiable {
 
     var emoji: String {
         switch self {
-        // Science
         case .physics: return "⚛️"
         case .chemistry: return "🧪"
         case .biology: return "🧬"
@@ -105,13 +101,11 @@ enum Subject: String, CaseIterable, Identifiable {
         case .computerScience: return "💻"
         case .zoology: return "🦁"
         case .psychology: return "🧠"
-        // Commerce
         case .accountancy: return "🧾"
         case .businessStudies: return "📊"
         case .economics: return "💹"
         case .statistics: return "📉"
         case .entrepreneurship: return "🚀"
-        // Arts
         case .history: return "🏛️"
         case .geography: return "🌍"
         case .politicalScience: return "⚖️"
@@ -133,7 +127,6 @@ enum Subject: String, CaseIterable, Identifiable {
         }
     }
 
-    // Subjects grouped by stream for UI rendering
     static var byStream: [(stream: SubjectStream, subjects: [Subject])] {
         SubjectStream.allCases.map { stream in
             (stream: stream, subjects: Subject.allCases.filter { $0.stream == stream })
@@ -215,6 +208,7 @@ class AppSession: ObservableObject {
         personalityScores.max(by: { $0.value < $1.value })?.key ?? .analytical
     }
 
+    // Fix: motivationalQuote was missing from reset — old quote bled into new session
     func reset() {
         userName = ""
         selectedSubjects = []
@@ -224,6 +218,7 @@ class AppSession: ObservableObject {
         bookmarkedCareers = []
         skillProgress = [:]
         goals = []
+        motivationalQuote = ""
     }
 }
 

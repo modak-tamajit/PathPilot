@@ -11,28 +11,22 @@ struct ExtraToolsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Nav Bar
             HStack {
-                Button(action: onBack) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Results")
-                    }
-                    .foregroundColor(.cyan)
-                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                }
+                NavBackButton(label: "Results", action: onBack)
                 Spacer()
                 Text("Extra Tools")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundColor(Theme.textPrimary)
                 Spacer()
+                // Invisible balance element
+                Text("Results")
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundColor(.clear)
             }
             .padding(.horizontal, 24)
             .padding(.top, 56)
             .padding(.bottom, 16)
 
-            // Tab Pills
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(Array(tabs.enumerated()), id: \.offset) { idx, tab in
@@ -42,7 +36,11 @@ struct ExtraToolsView: View {
                                 .foregroundColor(activeTab == idx ? .black : Theme.textSecondary)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 9)
-                                .background(activeTab == idx ? Theme.gradientAccent : LinearGradient(colors: [Color.white.opacity(0.08)], startPoint: .leading, endPoint: .trailing))
+                                .background(
+                                    activeTab == idx
+                                        ? Theme.gradientAccent
+                                        : LinearGradient(colors: [Color.white.opacity(0.08)], startPoint: .leading, endPoint: .trailing)
+                                )
                                 .cornerRadius(20)
                         }
                     }
@@ -51,7 +49,6 @@ struct ExtraToolsView: View {
             }
             .padding(.bottom, 14)
 
-            // Tab Content
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 20) {
                     switch activeTab {
@@ -80,7 +77,6 @@ struct GoalTrackerView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Progress summary
             VStack(spacing: 8) {
                 HStack {
                     Text("🎯 Goal Tracker")
@@ -100,7 +96,6 @@ struct GoalTrackerView: View {
             .padding(18)
             .glassCard()
 
-            // Goals list
             ForEach($session.goals) { $goal in
                 Button(action: {
                     withAnimation(.spring(response: 0.3)) {
@@ -126,7 +121,6 @@ struct GoalTrackerView: View {
                 .buttonStyle(.plain)
             }
 
-            // Add custom goal
             VStack(spacing: 10) {
                 Text("Add Your Own Goal")
                     .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -141,13 +135,12 @@ struct GoalTrackerView: View {
                         .background(Color.white.opacity(0.07))
                         .cornerRadius(10)
                         .tint(.cyan)
-
-                    Button(action: {
-                        if !newGoalText.trimmingCharacters(in: .whitespaces).isEmpty {
-                            withAnimation { session.goals.append(GoalItem(title: newGoalText)) }
-                            newGoalText = ""
+                        .submitLabel(.done)
+                        .onSubmit {
+                            addGoal()
                         }
-                    }) {
+
+                    Button(action: addGoal) {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 28))
                             .foregroundColor(.cyan)
@@ -157,6 +150,12 @@ struct GoalTrackerView: View {
             .padding(18)
             .glassCard()
         }
+    }
+
+    private func addGoal() {
+        guard !newGoalText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        withAnimation { session.goals.append(GoalItem(title: newGoalText)) }
+        newGoalText = ""
     }
 }
 
@@ -202,67 +201,90 @@ struct ThirtyDayPlanView: View {
                     .buttonStyle(.plain)
                 }
             } else {
-                Text("Complete the quiz to generate your plan!")
-                    .foregroundColor(Theme.textSecondary)
-                    .font(.system(size: 14, design: .rounded))
-                    .padding()
+                VStack(spacing: 12) {
+                    Text("📋")
+                        .font(.system(size: 40))
+                    Text("Complete the quiz to generate your plan!")
+                        .foregroundColor(Theme.textSecondary)
+                        .font(.system(size: 14, design: .rounded))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(32)
+                .glassCard()
             }
         }
     }
 }
 
 // MARK: - Career Comparison
+// Fix: removed double-nested glassCard — outer container no longer wraps already-carded items
 struct CareerComparisonView: View {
     @ObservedObject var session: AppSession
 
     var body: some View {
         VStack(spacing: 14) {
-            Text("🧩 Career Comparison")
-                .font(.system(size: 17, weight: .bold, design: .rounded))
-                .foregroundColor(Theme.textPrimary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 18)
-                .padding(.top, 18)
+            HStack {
+                Text("🧩 Career Comparison")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .foregroundColor(Theme.textPrimary)
+                Spacer()
+                Text("\(session.primaryCareers.count + session.alternateCareers.count) careers")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundColor(Theme.textTertiary)
+            }
 
             let allCareers = session.primaryCareers + session.alternateCareers
-            ForEach(allCareers) { career in
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Text(career.emoji + " " + career.title)
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundColor(Theme.textPrimary)
-                        Spacer()
-                        if session.bookmarkedCareers.contains(career.title) {
-                            Image(systemName: "bookmark.fill")
-                                .foregroundColor(.yellow)
-                                .font(.system(size: 13))
-                        }
-                    }
 
-                    HStack(spacing: 8) {
-                        CompareTag(icon: "clock", text: career.timeline, color: .cyan)
-                        CompareTag(icon: "graduationcap", text: career.entranceExams.first ?? "Varies", color: .purple)
-                    }
-
-                    // Skill count
-                    HStack(spacing: 6) {
-                        ForEach(career.skills.prefix(3), id: \.self) { skill in
-                            Text(skill)
-                                .font(.system(size: 10, weight: .semibold, design: .rounded))
-                                .foregroundColor(Theme.textSecondary)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.white.opacity(0.07))
-                                .cornerRadius(8)
-                        }
-                    }
+            if allCareers.isEmpty {
+                VStack(spacing: 12) {
+                    Text("🔍")
+                        .font(.system(size: 40))
+                    Text("No careers to compare yet.\nComplete the quiz first.")
+                        .foregroundColor(Theme.textSecondary)
+                        .font(.system(size: 14, design: .rounded))
+                        .multilineTextAlignment(.center)
                 }
-                .padding(16)
-                .glassCard(opacity: 0.08, cornerRadius: 14)
+                .frame(maxWidth: .infinity)
+                .padding(32)
+                .glassCard()
+            } else {
+                ForEach(allCareers) { career in
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text(career.emoji + " " + career.title)
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                                .foregroundColor(Theme.textPrimary)
+                            Spacer()
+                            if session.bookmarkedCareers.contains(career.title) {
+                                Image(systemName: "bookmark.fill")
+                                    .foregroundColor(.yellow)
+                                    .font(.system(size: 13))
+                            }
+                        }
+
+                        HStack(spacing: 8) {
+                            CompareTag(icon: "clock", text: career.timeline, color: .cyan)
+                            CompareTag(icon: "banknote", text: career.salaryRange, color: .green)
+                        }
+
+                        HStack(spacing: 6) {
+                            ForEach(career.skills.prefix(3), id: \.self) { skill in
+                                Text(skill)
+                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                    .foregroundColor(Theme.textSecondary)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.white.opacity(0.07))
+                                    .cornerRadius(8)
+                            }
+                        }
+                    }
+                    .padding(16)
+                    .glassCard(opacity: 0.08, cornerRadius: 14)
+                }
             }
         }
-        .padding(.bottom, 18)
-        .glassCard(opacity: 0.05)
     }
 }
 
@@ -291,7 +313,6 @@ struct PersonalityProfileView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Top trait hero
             VStack(spacing: 10) {
                 Text(session.topTrait.emoji)
                     .font(.system(size: 52))
@@ -306,10 +327,8 @@ struct PersonalityProfileView: View {
             .padding(20)
             .glassCard()
 
-            // Chart
             PersonalityChartView(scores: session.personalityScores)
 
-            // All traits breakdown
             VStack(alignment: .leading, spacing: 12) {
                 Text("All Personality Traits")
                     .font(.system(size: 15, weight: .bold, design: .rounded))
@@ -331,19 +350,20 @@ struct PersonalityProfileView: View {
             .padding(18)
             .glassCard()
 
-            // Motivational quote
-            VStack(spacing: 8) {
-                Text("✨ Your Motivation")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundColor(Theme.textPrimary)
-                Text(session.motivationalQuote)
-                    .font(.system(size: 14, design: .rounded))
-                    .foregroundColor(.cyan.opacity(0.9))
-                    .multilineTextAlignment(.center)
-                    .lineSpacing(4)
+            if !session.motivationalQuote.isEmpty {
+                VStack(spacing: 8) {
+                    Text("✨ Your Motivation")
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(Theme.textPrimary)
+                    Text(session.motivationalQuote)
+                        .font(.system(size: 14, design: .rounded))
+                        .foregroundColor(.cyan.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(4)
+                }
+                .padding(18)
+                .glassCard()
             }
-            .padding(18)
-            .glassCard()
         }
     }
 }

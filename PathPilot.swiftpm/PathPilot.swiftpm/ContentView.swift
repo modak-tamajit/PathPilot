@@ -15,7 +15,17 @@ enum AppScreen {
 struct ContentView: View {
     @StateObject private var session = AppSession()
     @State private var screen: AppScreen = .welcome
-    @State private var navigationPath: [AppScreen] = []
+
+    // Increments on every navigation — used as the stable animation trigger.
+    // Fixes the UUID() bug where animation fired on every render pass.
+    @State private var screenTransitionID = 0
+
+    private func navigate(to next: AppScreen) {
+        withAnimation(.easeInOut(duration: 0.4)) {
+            screenTransitionID += 1
+            screen = next
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -23,15 +33,12 @@ struct ContentView: View {
             Theme.background.ignoresSafeArea()
             StarsView()
 
-            // Screen Router
             Group {
-
                 switch screen {
+
                 case .welcome:
                     WelcomeView {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .nameInput
-                        }
+                        navigate(to: .nameInput)
                     }
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .offset(y: 30)),
@@ -39,22 +46,22 @@ struct ContentView: View {
                     ))
 
                 case .nameInput:
-                    NameInputView(session: session) {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .subjectSelection
-                        }
-                    }
+                    NameInputView(session: session, onBack: {
+                        navigate(to: .welcome)
+                    }, onContinue: {
+                        navigate(to: .subjectSelection)
+                    })
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .offset(y: 30)),
                         removal: .opacity.combined(with: .offset(y: -30))
                     ))
 
                 case .subjectSelection:
-                    SubjectSelectionView(session: session) {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .quiz
-                        }
-                    }
+                    SubjectSelectionView(session: session, onBack: {
+                        navigate(to: .nameInput)
+                    }, onContinue: {
+                        navigate(to: .quiz)
+                    })
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .offset(y: 30)),
                         removal: .opacity.combined(with: .offset(y: -30))
@@ -72,9 +79,7 @@ struct ContentView: View {
                         if let first = primary.first {
                             session.goals = generate30DayPlan(for: first)
                         }
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .results
-                        }
+                        navigate(to: .results)
                     }
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .offset(y: 30)),
@@ -83,18 +88,12 @@ struct ContentView: View {
 
                 case .results:
                     ResultsView(session: session) { career in
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .careerDetail(career)
-                        }
+                        navigate(to: .careerDetail(career))
                     } onExtraTools: {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .extraTools
-                        }
+                        navigate(to: .extraTools)
                     } onReset: {
                         session.reset()
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .welcome
-                        }
+                        navigate(to: .welcome)
                     }
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .offset(y: 30)),
@@ -103,9 +102,7 @@ struct ContentView: View {
 
                 case .careerDetail(let career):
                     CareerDetailView(career: career, session: session) {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .results
-                        }
+                        navigate(to: .results)
                     }
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .offset(x: 40)),
@@ -114,9 +111,7 @@ struct ContentView: View {
 
                 case .extraTools:
                     ExtraToolsView(session: session) {
-                        withAnimation(.easeInOut(duration: 0.4)) {
-                            screen = .results
-                        }
+                        navigate(to: .results)
                     }
                     .transition(.asymmetric(
                         insertion: .opacity.combined(with: .offset(y: 30)),
@@ -124,7 +119,8 @@ struct ContentView: View {
                     ))
                 }
             }
-            .animation(.easeInOut(duration: 0.35), value: UUID())
+            // Fix: animate on screenTransitionID (stable Int), NOT UUID() which fires every render
+            .animation(.easeInOut(duration: 0.35), value: screenTransitionID)
         }
         .preferredColorScheme(session.isDarkMode ? .dark : .light)
         .animation(.easeInOut(duration: 0.4), value: session.isDarkMode)

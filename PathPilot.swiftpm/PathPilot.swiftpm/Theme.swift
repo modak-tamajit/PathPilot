@@ -65,6 +65,8 @@ struct PrimaryButtonStyle: ViewModifier {
 }
 
 // MARK: - Stars Background
+// Fix: stars are precomputed as a static constant so they never re-randomise
+// on view re-creation (was causing visible flickering on navigation).
 struct StarsView: View {
     struct Star {
         let x: CGFloat
@@ -73,24 +75,33 @@ struct StarsView: View {
         let opacity: Double
     }
 
-    let stars: [Star] = (0..<100).map { _ in
-        Star(
-            x: CGFloat.random(in: 0...1),
-            y: CGFloat.random(in: 0...1),
-            size: CGFloat.random(in: 1...3),
-            opacity: Double.random(in: 0.2...0.7)
-        )
-    }
+    // Static: computed once at app launch, stable across all renders
+    static let stars: [Star] = {
+        // Deterministic hash-based positions — no randomness at runtime
+        (0..<90).map { i in
+            let h1 = Double((i &* 2654435761) % 100000) / 100000.0
+            let h2 = Double((i &* 2246822519) % 100000) / 100000.0
+            let h3 = Double((i &* 3266489917) % 100000) / 100000.0
+            let h4 = Double((i &* 668265263)  % 100000) / 100000.0
+            return Star(
+                x:       CGFloat(h1),
+                y:       CGFloat(h2),
+                size:    CGFloat(h3 * 2.2 + 0.8),
+                opacity: h4 * 0.5 + 0.15
+            )
+        }
+    }()
 
     var body: some View {
         GeometryReader { geo in
-            ForEach(0..<stars.count, id: \.self) { i in
+            ForEach(0..<Self.stars.count, id: \.self) { i in
+                let star = Self.stars[i]
                 Circle()
-                    .fill(Color.white.opacity(stars[i].opacity))
-                    .frame(width: stars[i].size, height: stars[i].size)
+                    .fill(Color.white.opacity(star.opacity))
+                    .frame(width: star.size, height: star.size)
                     .position(
-                        x: stars[i].x * geo.size.width,
-                        y: stars[i].y * geo.size.height
+                        x: star.x * geo.size.width,
+                        y: star.y * geo.size.height
                     )
             }
         }
@@ -152,7 +163,12 @@ struct PersonalityChartView: View {
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(trait.color.opacity(0.85))
                                 .frame(width: geo.size.width * ratio)
-                                .animation(.spring(response: 0.6).delay(Double(PersonalityTrait.allCases.firstIndex(of: trait) ?? 0) * 0.08), value: ratio)
+                                .animation(
+                                    .spring(response: 0.6).delay(
+                                        Double(PersonalityTrait.allCases.firstIndex(of: trait) ?? 0) * 0.08
+                                    ),
+                                    value: ratio
+                                )
                         }
                     }
                     .frame(height: 10)
@@ -166,5 +182,23 @@ struct PersonalityChartView: View {
         }
         .padding(20)
         .glassCard()
+    }
+}
+
+// MARK: - Reusable Nav Back Button
+struct NavBackButton: View {
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 14, weight: .semibold))
+                Text(label)
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+            }
+            .foregroundColor(.cyan)
+        }
     }
 }
